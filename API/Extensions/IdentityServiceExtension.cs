@@ -1,6 +1,8 @@
 using System.Text;
 using API.Data;
 using API.Entities;
+using API.Interfaces;
+using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -57,6 +59,8 @@ public static class IdentityServiceExtension
             options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
             options.AddPolicy("RequireUserRole", policy => policy.RequireRole("User"));
         });
+
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }
