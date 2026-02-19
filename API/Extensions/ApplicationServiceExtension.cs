@@ -2,6 +2,7 @@ using API.Data;
 using API.Interfaces;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 
 namespace API.Extensions;
 
@@ -23,7 +24,19 @@ public static class ApplicationServiceExtension
         services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddOpenApi();
-        services.AddSwaggerGen();
+        services.AddSwaggerGen(c =>
+        {
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter your valid token."
+            });
+        });
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }
