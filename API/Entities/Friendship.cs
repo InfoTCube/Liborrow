@@ -11,5 +11,5 @@ public class Friendship
     public AppUser? Receiver { get; set; }
 
     public DateTime CreatedAt { get; set; }
-    public FriendshipStatus Status { get; set; }
+    public FriendshipStatus Status { get; set; } = FriendshipStatus.Pending;
 }

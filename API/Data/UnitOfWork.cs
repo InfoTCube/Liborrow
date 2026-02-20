@@ -12,6 +12,8 @@ public class UnitOfWork : IUnitOfWork
     }
 
     public IBookRepository Books => new BookRepository(_context);
+    public IUserRepository Users => new UserRepository(_context);
+    public IFriendshipRepository Friendships => new FriendshipRepository(_context);
 
     public async Task<bool> CompleteAsync() => await _context.SaveChangesAsync() > 0;
 }
