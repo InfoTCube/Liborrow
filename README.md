@@ -1,5 +1,7 @@
 # Liborrow
 
+[![CodeScene Average Code Health](https://codescene.io/projects/77101/status-badges/average-code-health)](https://codescene.io/projects/77101)
+
 Liborrow is a social book lending app that lets you share books with friends. Borrow and lend books within your trusted network — no strangers, no hassle. Perfect for students looking to save money on textbooks or anyone who wants to build a sharing community with people they know.
 
 ## ✨ Features
@@ -18,9 +20,9 @@ Liborrow is a social book lending app that lets you share books with friends. Bo
 |-------------|----------------------------------------------------------------------------|
 | Mobile      | TBD                                                                        |
 | Backend     | ASP.NET Core Web API (C#)                                                  |
-| Database    | PostgreSQL (with Entity Framework Core)                                    |
+| Database    | PostgreSQL (with Entity Framework Core) / Sqlite for development           |
 | Auth        | JWT (JSON Web Tokens)                                                      |
-| External API| TBD, maybe Google Books API (for book metadata)                            |
+| External API| Biblioteka Narodowa API                                                    |
 | Hosting     | TBD                                                                        |
 | CI/CD       | GitHub Actions                                                             |
 

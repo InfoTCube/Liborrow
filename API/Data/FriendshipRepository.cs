@@ -15,6 +15,14 @@ public class FriendshipRepository : IFriendshipRepository
         _context = context;
     }
 
+    public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+    {
+        return await _context.Friendships.AnyAsync(f =>
+            ((f.RequesterId == userId && f.ReceiverId == friendId) ||
+             (f.RequesterId == friendId && f.ReceiverId == userId)) &&
+             f.Status == FriendshipStatus.Accepted);
+    }
+
     public async Task<bool> CancelFriendRequestAsync(Guid userId, Guid friendshipId)
     {
         var friendship = await _context.Friendships

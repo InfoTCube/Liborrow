@@ -11,4 +11,5 @@ public interface IFriendshipRepository
     Task<IEnumerable<FriendRequestDto>> GetPendingRequestsAsync(Guid userId);
     Task<bool> RemoveFriendAsync(Guid userId, Guid friendId);
     Task<bool> CancelFriendRequestAsync(Guid userId, Guid friendshipId);
+    Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
 }

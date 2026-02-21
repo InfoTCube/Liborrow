@@ -166,4 +166,19 @@ public class BooksController : BaseApiController
         
         return Ok(userBooks);
     }
+
+    [HttpGet("friends/{friendId}")]
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetFriendBooks(Guid friendId)
+    {
+        var userId = User.GetUserId();
+        
+        var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
+        
+        if (!isFriend)
+            return BadRequest("You can only view books of your friends.");
+        
+        var friendBooks = await _unitOfWork.Books.GetUserBooksAsync(friendId);
+        
+        return Ok(friendBooks); 
+    }
 }
