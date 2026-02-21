@@ -25,4 +25,7 @@ public class Loan
 
     public string? RequestMessage { get; set; }
     public string? Notes { get; set; }
+
+    public Guid UserBookId { get; set; }
+    public UserBook? UserBook { get; set; }
 }

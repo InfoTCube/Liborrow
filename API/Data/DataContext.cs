@@ -77,6 +77,11 @@ public class DataContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
 
             // Ensure a user can't have the same book twice
             entity.HasIndex(ub => new { ub.UserId, ub.ISBN }).IsUnique();
+
+            entity.HasMany(ub => ub.Loans)
+                .WithOne(l => l.UserBook)
+                .HasForeignKey(l => l.UserBookId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Friendship>(entity =>
@@ -110,6 +115,11 @@ public class DataContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(l => l.Borrower)
                 .WithMany(u => u.BorrowedBooks)
                 .HasForeignKey(l => l.BorrowerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(l => l.UserBook)
+                .WithMany(ub => ub.Loans)
+                .HasForeignKey(l => l.UserBookId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

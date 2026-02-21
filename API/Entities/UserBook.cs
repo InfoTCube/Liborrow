@@ -18,4 +18,6 @@ public class UserBook
     public DateTime AddedAt { get; set; }
     public bool IsAvailable { get; set; }
     public string? Notes { get; set; }
+
+    public ICollection<Loan> Loans { get; set; } = new List<Loan>();
 }

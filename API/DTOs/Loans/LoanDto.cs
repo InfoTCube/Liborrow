@@ -20,4 +20,17 @@ public record LoanDto
     public DateTime? ReturnedAt { get; set; }
     public LoanStatus Status { get; set; }
     public string? RequestMessage { get; set; }
+    public string? Notes { get; set; }
+
+    public bool IsPickedUp => LoanDate.HasValue;
+
+    public bool IsOverdue => 
+        Status == LoanStatus.Active && 
+        DueDate.HasValue && 
+        DueDate.Value < DateTime.UtcNow;
+    
+    public int? DaysUntilDue => 
+        DueDate.HasValue 
+            ? (DueDate.Value.Date - DateTime.UtcNow.Date).Days 
+            : null;
 }

@@ -181,4 +181,14 @@ public class BooksController : BaseApiController
         
         return Ok(friendBooks); 
     }
+
+    [HttpGet("search-friends")]
+    public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string query)
+    {
+        var userId = User.GetUserId();
+        
+        var books = await _unitOfWork.Books.SearchFriendsBooksAsync(userId, query);
+        
+        return Ok(books);
+    }
 }
