@@ -1,5 +1,6 @@
 using API.DTOs.Users;
 using API.Entities;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,9 +37,9 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.UserName == username.ToLower());
     }
 
-    public async Task<IEnumerable<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query)
+    public async Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams)
     {
-        var users = await _context.Users
+        var users = _context.Users
             .Where(u => u.Id != currentUserId &&
                        (u.UserName.Contains(query) ||
                         u.Email.Contains(query)))
@@ -54,10 +55,8 @@ public class UserRepository : IUserRepository
                     .Select(f => f.Status)
                     .FirstOrDefault(),
                 CreatedAt = u.CreatedAt
-            })
-            .Take(20)
-            .ToListAsync();
+            });
 
-        return users;
+        return await PagedList<UserSearchDto>.CreateAsync(users, elementParams.PageNumber, elementParams.PageSize);
     }
 }

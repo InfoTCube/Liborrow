@@ -1,6 +1,7 @@
 using API.DTOs.Friendships;
 using API.Enums;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -100,22 +101,28 @@ public class FriendsController : BaseApiController
     }
     
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FriendDto>>> GetFriends()
+    public async Task<ActionResult<IEnumerable<FriendDto>>> GetFriends([FromQuery] ElementParams elementParams)
     {
         var userId = User.GetUserId();
         
-        var friends = await _unitOfWork.Friendships.GetUserFriendsAsync(userId);
+        var friends = await _unitOfWork.Friendships.GetUserFriendsAsync(userId, elementParams);
         
+        Response.AddPaginationHeader(friends.CurrentPage, friends.PageSize, 
+            friends.TotalCount, friends.TotalPages);
+
         return Ok(friends);
     }
     
     [HttpGet("requests")]
-    public async Task<ActionResult<IEnumerable<FriendRequestDto>>> GetPendingRequests()
+    public async Task<ActionResult<IEnumerable<FriendRequestDto>>> GetPendingRequests([FromQuery] ElementParams elementParams)
     {
         var userId = User.GetUserId();
         
-        var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId);
+        var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId, elementParams);
         
+        Response.AddPaginationHeader(requests.CurrentPage, requests.PageSize, 
+            requests.TotalCount, requests.TotalPages);
+
         return Ok(requests);
     }
 }

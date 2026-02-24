@@ -1,6 +1,7 @@
 using API.DTOs.Loans;
 using API.Entities;
 using API.Enums;
+using API.Helpers;
 
 namespace API.Interfaces;
 
@@ -9,15 +10,15 @@ public interface ILoanRepository
     Task<Loan?> GetLoanByIdAsync(Guid id);
     Task AddLoanAsync(Loan loan);
 
-    Task<IEnumerable<LoanDto>> GetLoansForOwnerAsync(Guid ownerId, LoanStatus? status = null);
-    Task<IEnumerable<LoanDto>> GetPendingRequestsForOwnerAsync(Guid ownerId);
+    Task<PagedList<LoanDto>> GetLoansForOwnerAsync(Guid ownerId, ElementParams elementParams, LoanStatus? status = null);
+    Task<PagedList<LoanDto>> GetPendingRequestsForOwnerAsync(Guid ownerId, ElementParams elementParams);
 
-    Task<IEnumerable<LoanDto>> GetLoansForBorrowerAsync(Guid borrowerId, LoanStatus? status = null);
-    Task<IEnumerable<LoanDto>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId);
+    Task<PagedList<LoanDto>> GetLoansForBorrowerAsync(Guid borrowerId, ElementParams elementParams, LoanStatus? status = null);
+    Task<PagedList<LoanDto>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId, ElementParams elementParams);
 
-    Task<IEnumerable<LoanDto>> GetActiveLoansAsync(Guid userId);
+    Task<PagedList<LoanDto>> GetActiveLoansAsync(Guid userId, ElementParams elementParams);
 
-    Task<IEnumerable<LoanDto>> GetLoanHistoryAsync(Guid userId);
+    Task<PagedList<LoanDto>> GetLoanHistoryAsync(Guid userId, ElementParams elementParams);
 
     Task<bool> IsBookAvailableForLoanAsync(Guid ownerId, string isbn);
     Task<bool> HasPendingLoanAsync(Guid ownerId, string isbn, Guid borrowerId);

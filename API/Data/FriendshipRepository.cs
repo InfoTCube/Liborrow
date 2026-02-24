@@ -1,6 +1,7 @@
 using API.DTOs.Friendships;
 using API.Entities;
 using API.Enums;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,9 +44,9 @@ public class FriendshipRepository : IFriendshipRepository
         return await _context.Friendships.FindAsync(friendshipId);
     }
 
-    public async Task<IEnumerable<FriendRequestDto>> GetPendingRequestsAsync(Guid userId)
+    public async Task<PagedList<FriendRequestDto>> GetPendingRequestsAsync(Guid userId, ElementParams elementParams)
     {
-        return await _context.Friendships
+        var friendRequests = _context.Friendships
             .Include(fr => fr.Requester)
             .Where(fr => fr.ReceiverId == userId && fr.Status == FriendshipStatus.Pending)
             .Select(fr => new FriendRequestDto
@@ -55,13 +56,14 @@ public class FriendshipRepository : IFriendshipRepository
                 RequesterName = fr.Requester.UserName,
                 RequestedAt = fr.CreatedAt,
                 Status = fr.Status
-            })
-            .ToListAsync();
+            });
+
+        return await PagedList<FriendRequestDto>.CreateAsync(friendRequests, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<IEnumerable<FriendDto>> GetUserFriendsAsync(Guid userId)
+    public async Task<PagedList<FriendDto>> GetUserFriendsAsync(Guid userId, ElementParams elementParams)
     {
-        return await _context.Friendships
+        var friends = _context.Friendships
             .Include(f => f.Requester)
             .Include(f => f.Receiver)
             .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) && f.Status == FriendshipStatus.Accepted)
@@ -70,8 +72,9 @@ public class FriendshipRepository : IFriendshipRepository
                 UserId = f.RequesterId == userId ? f.ReceiverId : f.RequesterId,
                 UserName = f.RequesterId == userId ? f.Receiver.UserName : f.Requester.UserName,
                 FriendshipId = f.Id
-            })
-            .ToListAsync();
+            });
+            
+        return await PagedList<FriendDto>.CreateAsync(friends, elementParams.PageNumber, elementParams.PageSize);
     }
 
     public async Task<bool> RemoveFriendAsync(Guid userId, Guid friendId)

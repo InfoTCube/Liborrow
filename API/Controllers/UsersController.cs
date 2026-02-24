@@ -1,5 +1,6 @@
 using API.DTOs.Users;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +18,14 @@ public class UsersController : BaseApiController
 
     [Authorize]
     [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string query)
+    public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string query, [FromQuery] ElementParams elementParams)
     {
         var currentUserId = User.GetUserId();
         
-        var users = await _unitOfWork.Users.SearchUsersAsync(currentUserId, query);
+        var users = await _unitOfWork.Users.SearchUsersAsync(currentUserId, query, elementParams);
+
+        Response.AddPaginationHeader(users.CurrentPage, users.PageSize, 
+            users.TotalCount, users.TotalPages);
         
         return Ok(users);
     }

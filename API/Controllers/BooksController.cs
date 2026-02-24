@@ -3,6 +3,7 @@ using API.DTOs.Books;
 using API.Entities;
 using API.Enums;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -158,17 +159,20 @@ public class BooksController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetMyBooks()
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetMyBooks([FromQuery] ElementParams elementParams)
     {
         var userId = User.GetUserId();
         
-        var userBooks = await _unitOfWork.Books.GetUserBooksAsync(userId);
+        var userBooks = await _unitOfWork.Books.GetUserBooksAsync(userId, elementParams);
+
+        Response.AddPaginationHeader(userBooks.CurrentPage, userBooks.PageSize, 
+            userBooks.TotalCount, userBooks.TotalPages);
         
         return Ok(userBooks);
     }
 
     [HttpGet("friends/{friendId}")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetFriendBooks(Guid friendId)
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetFriendBooks(Guid friendId, [FromQuery] ElementParams elementParams)
     {
         var userId = User.GetUserId();
         
@@ -177,17 +181,23 @@ public class BooksController : BaseApiController
         if (!isFriend)
             return BadRequest("You can only view books of your friends.");
         
-        var friendBooks = await _unitOfWork.Books.GetUserBooksAsync(friendId);
+        var friendBooks = await _unitOfWork.Books.GetUserBooksAsync(friendId, elementParams);
+
+        Response.AddPaginationHeader(friendBooks.CurrentPage, friendBooks.PageSize, 
+            friendBooks.TotalCount, friendBooks.TotalPages);
         
         return Ok(friendBooks); 
     }
 
     [HttpGet("search-friends")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string query)
+    public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string query, [FromQuery] ElementParams elementParams)
     {
         var userId = User.GetUserId();
         
-        var books = await _unitOfWork.Books.SearchFriendsBooksAsync(userId, query);
+        var books = await _unitOfWork.Books.SearchFriendsBooksAsync(userId, query, elementParams);
+        
+        Response.AddPaginationHeader(books.CurrentPage, books.PageSize, 
+            books.TotalCount, books.TotalPages);
         
         return Ok(books);
     }

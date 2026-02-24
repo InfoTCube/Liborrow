@@ -1,5 +1,6 @@
 using API.DTOs.Users;
 using API.Entities;
+using API.Helpers;
 
 namespace API.Interfaces;
 
@@ -9,7 +10,7 @@ public interface IUserRepository
     Task<AppUser?> GetUserByEmailAsync(string email);
     Task<AppUser?> GetUserByUsernameAsync(string username);
     
-    Task<IEnumerable<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query);
+    Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams);
     
     //Task<UserProfileDto?> GetUserProfileAsync(Guid userId, Guid currentUserId);
     

@@ -1,5 +1,6 @@
 using API.DTOs.Books;
 using API.Entities;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,9 +53,9 @@ public class BookRepository : IBookRepository
             .AnyAsync(ub => ub.UserId == userId && ub.ISBN == isbn);
     }
 
-    public async Task<IEnumerable<BookDto>> GetUserBooksAsync(Guid userId)
+    public async Task<PagedList<BookDto>> GetUserBooksAsync(Guid userId, ElementParams elementParams)
     {
-        return await _context.UserBooks
+        var books = _context.UserBooks
             .Where(ub => ub.UserId == userId)
             .Join(_context.Books, ub => ub.ISBN, b => b.ISBN, (ub, b) => new BookDto
             {
@@ -68,11 +69,12 @@ public class BookRepository : IBookRepository
                 IsAvailable = ub.IsAvailable,
                 Notes = ub.Notes,
                 AddedAt = ub.AddedAt
-            })
-            .ToListAsync();
+            });
+            
+        return await PagedList<BookDto>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<IEnumerable<BookDto>> SearchFriendsBooksAsync(Guid userId, string query)
+    public async Task<PagedList<BookDto>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams)
     {
         var friendIds = await _context.Friendships
             .Where(f =>
@@ -80,7 +82,7 @@ public class BookRepository : IBookRepository
             .Select(f => f.RequesterId == userId ? f.ReceiverId : f.RequesterId)
             .ToListAsync();
 
-        return await _context.UserBooks
+        var books = _context.UserBooks
             .Where(ub => friendIds.Contains(ub.UserId) && ub.Book.Title.ToLower().Contains(query.ToLower()))
             .Join(_context.Books, ub => ub.ISBN, b => b.ISBN, (ub, b) => new BookDto
             {
@@ -94,7 +96,8 @@ public class BookRepository : IBookRepository
                 IsAvailable = ub.IsAvailable,
                 Notes = ub.Notes,
                 AddedAt = ub.AddedAt
-            })
-            .ToListAsync();
+            });
+
+        return await PagedList<BookDto>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
     }
 }
