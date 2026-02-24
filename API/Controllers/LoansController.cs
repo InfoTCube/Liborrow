@@ -20,22 +20,22 @@ public class LoansController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<IActionResult> RequestLoan(BorrowRequestDto borrowequestDto)
+    public async Task<IActionResult> RequestLoan(BorrowRequestDto borrowRequestDto)
     {
-        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(borrowequestDto.ISBN, borrowequestDto.OwnerId);
+        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(borrowRequestDto.ISBN, borrowRequestDto.OwnerId);
 
-        if(await _unitOfWork.Loans.IsBookAvailableForLoanAsync(borrowequestDto.OwnerId, borrowequestDto.ISBN) is false)
+        if(await _unitOfWork.Loans.IsBookAvailableForLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN) is false)
             return BadRequest("This book is currently not available for loan.");
 
-        if(await _unitOfWork.Loans.HasPendingLoanAsync(borrowequestDto.OwnerId, borrowequestDto.ISBN, User.GetUserId()))
+        if(await _unitOfWork.Loans.HasPendingLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN, User.GetUserId()))
             return BadRequest("You already have a pending loan request for this book.");
 
         var newLoan = new Loan
         {
-            ISBN = borrowequestDto.ISBN,
-            OwnerId = borrowequestDto.OwnerId,
+            ISBN = borrowRequestDto.ISBN,
+            OwnerId = borrowRequestDto.OwnerId,
             BorrowerId = User.GetUserId(),
-            RequestMessage = borrowequestDto.Message,
+            RequestMessage = borrowRequestDto.Message,
             RequestedAt = DateTime.UtcNow,
             Status = LoanStatus.Pending,
             UserBookId = userBook.Id

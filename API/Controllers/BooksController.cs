@@ -15,11 +15,13 @@ public class BooksController : BaseApiController
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBibliotekaNarodowaBooksService _bibliotekaNarodowaBooksService;
+    private readonly ILogger _logger;
 
-    public BooksController(IUnitOfWork unitOfWork, IBibliotekaNarodowaBooksService bibliotekaNarodowaBooksService)
+    public BooksController(IUnitOfWork unitOfWork, IBibliotekaNarodowaBooksService bibliotekaNarodowaBooksService, ILogger logger)
     {
         _unitOfWork = unitOfWork;
         _bibliotekaNarodowaBooksService = bibliotekaNarodowaBooksService;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -100,7 +102,8 @@ public class BooksController : BaseApiController
         }
         catch(Exception ex)
         {
-            return NotFound($"Error fetching book details, provide the book manually: {ex.Message}");
+            _logger.LogError(ex, "Error fetching book details from external API");
+            return NotFound($"Error fetching book details, provide the book manually!");
         }
 
         return BadRequest("Failed to add book to collection.");
