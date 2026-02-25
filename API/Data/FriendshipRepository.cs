@@ -44,37 +44,23 @@ public class FriendshipRepository : IFriendshipRepository
         return await _context.Friendships.FindAsync(friendshipId);
     }
 
-    public async Task<PagedList<FriendRequestDto>> GetPendingRequestsAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Friendship>> GetPendingRequestsAsync(Guid userId, ElementParams elementParams)
     {
         var friendRequests = _context.Friendships
             .Include(fr => fr.Requester)
-            .Where(fr => fr.ReceiverId == userId && fr.Status == FriendshipStatus.Pending)
-            .Select(fr => new FriendRequestDto
-            {
-                FriendshipId = fr.Id,
-                RequesterId = fr.RequesterId,
-                RequesterName = fr.Requester.UserName,
-                RequestedAt = fr.CreatedAt,
-                Status = fr.Status
-            });
+            .Where(fr => fr.ReceiverId == userId && fr.Status == FriendshipStatus.Pending);
 
-        return await PagedList<FriendRequestDto>.CreateAsync(friendRequests, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Friendship>.CreateAsync(friendRequests, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<FriendDto>> GetUserFriendsAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Friendship>> GetUserFriendsAsync(Guid userId, ElementParams elementParams)
     {
         var friends = _context.Friendships
             .Include(f => f.Requester)
             .Include(f => f.Receiver)
-            .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) && f.Status == FriendshipStatus.Accepted)
-            .Select(f => new FriendDto
-            {
-                UserId = f.RequesterId == userId ? f.ReceiverId : f.RequesterId,
-                UserName = f.RequesterId == userId ? f.Receiver.UserName : f.Requester.UserName,
-                FriendshipId = f.Id
-            });
+            .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) && f.Status == FriendshipStatus.Accepted);
             
-        return await PagedList<FriendDto>.CreateAsync(friends, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Friendship>.CreateAsync(friends, elementParams.PageNumber, elementParams.PageSize);
     }
 
     public async Task<bool> RemoveFriendAsync(Guid userId, Guid friendId)

@@ -1,6 +1,7 @@
 using API.DTOs.Friendships;
 using API.Enums;
 using API.Extensions;
+using API.Extensions.Mappers;
 using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -110,7 +111,7 @@ public class FriendsController : BaseApiController
         Response.AddPaginationHeader(friends.CurrentPage, friends.PageSize, 
             friends.TotalCount, friends.TotalPages);
 
-        return Ok(friends);
+        return Ok(friends.ToFriendDto(userId));
     }
     
     [HttpGet("requests")]
@@ -123,6 +124,6 @@ public class FriendsController : BaseApiController
         Response.AddPaginationHeader(requests.CurrentPage, requests.PageSize, 
             requests.TotalCount, requests.TotalPages);
 
-        return Ok(requests);
+        return Ok(requests.ToFriendRequestDto());
     }
 }

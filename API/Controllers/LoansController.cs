@@ -2,6 +2,7 @@ using API.DTOs.Loans;
 using API.Entities;
 using API.Enums;
 using API.Extensions;
+using API.Extensions.Mappers;
 using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -109,68 +110,68 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoans(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoans([FromQuery] ElementParams elementParams)
     {
         var loans = await _unitOfWork.Loans.GetActiveLoansAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(loans.CurrentPage, loans.PageSize, 
             loans.TotalCount, loans.TotalPages);
 
-        return Ok(loans);
+        return Ok(loans.ToLoanDto());
     }
 
     [HttpGet("borrowed")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetBorrowedLoans(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetBorrowedLoans([FromQuery] ElementParams elementParams)
     {
         var borrowedLoans = await _unitOfWork.Loans.GetLoansForBorrowerAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(borrowedLoans.CurrentPage, borrowedLoans.PageSize, 
             borrowedLoans.TotalCount, borrowedLoans.TotalPages);
 
-        return Ok(borrowedLoans);
+        return Ok(borrowedLoans.ToLoanDto());
     }
 
     [HttpGet("lent")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLentLoans(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLentLoans([FromQuery] ElementParams elementParams)
     {
         var lentLoans = await _unitOfWork.Loans.GetLoansForOwnerAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(lentLoans.CurrentPage, lentLoans.PageSize, 
             lentLoans.TotalCount, lentLoans.TotalPages);
 
-        return Ok(lentLoans);
+        return Ok(lentLoans.ToLoanDto());
     }
 
     [HttpGet("history")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoanHistory(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoanHistory([FromQuery] ElementParams elementParams)
     {
         var loanHistory = await _unitOfWork.Loans.GetLoanHistoryAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(loanHistory.CurrentPage, loanHistory.PageSize, 
             loanHistory.TotalCount, loanHistory.TotalPages);
 
-        return Ok(loanHistory);
+        return Ok(loanHistory.ToLoanDto());
     }
 
     [HttpGet("pending-requests")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests([FromQuery]ElementParams elementParams)
     {
         var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsForOwnerAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(pendingRequests.CurrentPage, pendingRequests.PageSize, 
             pendingRequests.TotalCount, pendingRequests.TotalPages);
 
-        return Ok(pendingRequests);
+        return Ok(pendingRequests.ToLoanDto());
     }
 
     [HttpGet("pending-requests/borrower")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequestsFromBorrower(ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequestsFromBorrower([FromQuery] ElementParams elementParams)
     {
         var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsFromBorrowerAsync(User.GetUserId(), elementParams);
 
         Response.AddPaginationHeader(pendingRequests.CurrentPage, pendingRequests.PageSize, 
             pendingRequests.TotalCount, pendingRequests.TotalPages);
-            
-        return Ok(pendingRequests);
+
+        return Ok(pendingRequests.ToLoanDto());
     }
 }

@@ -21,35 +21,15 @@ public class LoanRepository : ILoanRepository
         await _context.Loans.AddAsync(loan);
     }
 
-    public async Task<PagedList<LoanDto>> GetActiveLoansAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetActiveLoansAsync(Guid userId, ElementParams elementParams)
     {
         var loans = _context.Loans
             .Where(l => l.BorrowerId == userId && (l.Status == LoanStatus.Active || l.Status == LoanStatus.Overdue))
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
     public async Task<Loan?> GetLoanByIdAsync(Guid id)
@@ -57,39 +37,19 @@ public class LoanRepository : ILoanRepository
         return await _context.Loans.FindAsync(id);
     }
 
-    public async Task<PagedList<LoanDto>> GetLoanHistoryAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetLoanHistoryAsync(Guid userId, ElementParams elementParams)
     {
         var loans = _context.Loans
             .Where(l => (l.BorrowerId == userId || l.OwnerId == userId) && 
                 l.Status != LoanStatus.Active && l.Status != LoanStatus.Pending && l.Status != LoanStatus.Overdue)
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<LoanDto>> GetLoansForBorrowerAsync(Guid borrowerId, ElementParams elementParams, LoanStatus? status = null)
+    public async Task<PagedList<Loan>> GetLoansForBorrowerAsync(Guid borrowerId, ElementParams elementParams, LoanStatus? status = null)
     {
         var query = _context.Loans
             .Where(l => l.BorrowerId == borrowerId);
@@ -100,32 +60,12 @@ public class LoanRepository : ILoanRepository
         var loans = query
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<LoanDto>> GetLoansForOwnerAsync(Guid ownerId, ElementParams elementParams, LoanStatus? status = null)
+    public async Task<PagedList<Loan>> GetLoansForOwnerAsync(Guid ownerId, ElementParams elementParams, LoanStatus? status = null)
     {
         var query = _context.Loans
             .Where(l => l.OwnerId == ownerId);
@@ -136,91 +76,31 @@ public class LoanRepository : ILoanRepository
         var loans = query
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<LoanDto>> GetPendingRequestsForOwnerAsync(Guid ownerId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetPendingRequestsForOwnerAsync(Guid ownerId, ElementParams elementParams)
     {
         var loans = _context.Loans
             .Where(l => l.OwnerId == ownerId && l.Status == LoanStatus.Pending)
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<LoanDto>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId, ElementParams elementParams)
     {
         var loans = _context.Loans
             .Where(l => l.BorrowerId == borrowerId && l.Status == LoanStatus.Pending)
             .Include(l => l.Book)
             .Include(l => l.Owner)
-            .Include(l => l.Borrower)
-            .Select(l => new LoanDto
-            {
-                Id = l.Id,
-                ISBN = l.Book.ISBN,
-                BookTitle = l.Book.Title,
-                BookAuthor = l.Book.Author,
-                BookCoverUrl = l.Book.CoverImageUrl,
-                OwnerId = l.OwnerId,
-                BorrowerId = l.BorrowerId,
-                BorrowerName = l.Borrower.UserName,
-                OwnerName = l.Owner.UserName,
-                RequestedAt = l.RequestedAt,
-                ApprovedAt = l.ApprovedAt,
-                LoanDate = l.LoanDate,
-                DueDate = l.DueDate,
-                ReturnedAt = l.ReturnedAt,
-                RequestMessage = l.RequestMessage,
-                Notes = l.Notes,
-                Status = l.Status
-            });
+            .Include(l => l.Borrower);
 
-        return await PagedList<LoanDto>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
     }
 
     public async Task<bool> HasPendingLoanAsync(Guid ownerId, string isbn, Guid borrowerId)

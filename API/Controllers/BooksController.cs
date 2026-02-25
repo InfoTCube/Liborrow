@@ -3,6 +3,7 @@ using API.DTOs.Books;
 using API.Entities;
 using API.Enums;
 using API.Extensions;
+using API.Extensions.Mappers;
 using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +16,9 @@ public class BooksController : BaseApiController
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBibliotekaNarodowaBooksService _bibliotekaNarodowaBooksService;
-    private readonly ILogger _logger;
+    private readonly ILogger<BooksController> _logger;
 
-    public BooksController(IUnitOfWork unitOfWork, IBibliotekaNarodowaBooksService bibliotekaNarodowaBooksService, ILogger logger)
+    public BooksController(IUnitOfWork unitOfWork, IBibliotekaNarodowaBooksService bibliotekaNarodowaBooksService, ILogger<BooksController> logger)
     {
         _unitOfWork = unitOfWork;
         _bibliotekaNarodowaBooksService = bibliotekaNarodowaBooksService;
@@ -171,7 +172,7 @@ public class BooksController : BaseApiController
         Response.AddPaginationHeader(userBooks.CurrentPage, userBooks.PageSize, 
             userBooks.TotalCount, userBooks.TotalPages);
         
-        return Ok(userBooks);
+        return Ok(userBooks.ToBookDto());
     }
 
     [HttpGet("friends/{friendId}")]
@@ -189,7 +190,7 @@ public class BooksController : BaseApiController
         Response.AddPaginationHeader(friendBooks.CurrentPage, friendBooks.PageSize, 
             friendBooks.TotalCount, friendBooks.TotalPages);
         
-        return Ok(friendBooks); 
+        return Ok(friendBooks.ToBookDto()); 
     }
 
     [HttpGet("search-friends")]
@@ -202,6 +203,6 @@ public class BooksController : BaseApiController
         Response.AddPaginationHeader(books.CurrentPage, books.PageSize, 
             books.TotalCount, books.TotalPages);
         
-        return Ok(books);
+        return Ok(books.ToBookDto());
     }
 }
