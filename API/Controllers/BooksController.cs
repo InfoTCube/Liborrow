@@ -67,17 +67,7 @@ public class BooksController : BaseApiController
             if (bookFromApi is null)
                 return NotFound("Book not found in external API, please provide the book details manually.");
 
-            var newBook = new Book
-            {
-                ISBN = bookFromApi.ISBN,
-                Title = bookFromApi.Title,
-                Author = bookFromApi.Author,
-                CoverImageUrl = bookFromApi.CoverImageUrl,
-                Description = bookFromApi.Description,
-                PublishedYear = bookFromApi.PublishedYear,
-                PageCount = bookFromApi.PageCount,
-                Source = BookSource.BibliotekaNarodowa
-            };
+            var newBook = bookFromApi.ToBook(BookSource.BibliotekaNarodowa);
 
             await _unitOfWork.Books.AddBookAsync(newBook);
 
@@ -122,17 +112,7 @@ public class BooksController : BaseApiController
 
         if (existingBook is null)
         {
-            var newBook = new Book
-            {
-                ISBN = addBookManualDto.ISBN,
-                Title = addBookManualDto.Title,
-                Author = addBookManualDto.Author,
-                CoverImageUrl = addBookManualDto.CoverImageUrl,
-                Description = addBookManualDto.Description,
-                PublishedYear = addBookManualDto.PublishedYear,
-                PageCount = addBookManualDto.PageCount,
-                Source = BookSource.Users
-            };
+            var newBook = addBookManualDto.ToBook(BookSource.Users);
 
             await _unitOfWork.Books.AddBookAsync(newBook);
         }
