@@ -11,6 +11,6 @@ public interface IBookRepository
     Task<bool> UserOwnsBookAsync(Guid userId, string isbn);
     Task AddBookAsync(Book book);
     Task<UserBook> AddUserBookAsync(Guid userId, string isbn, string? notes);
-    Task<PagedList<BookDto>> GetUserBooksAsync(Guid userId, ElementParams elementParams);
-    Task<PagedList<BookDto>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams);
+    Task<PagedList<UserBook>> GetUserBooksAsync(Guid userId, ElementParams elementParams);
+    Task<PagedList<UserBook>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams);
 }

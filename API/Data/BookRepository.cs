@@ -53,28 +53,16 @@ public class BookRepository : IBookRepository
             .AnyAsync(ub => ub.UserId == userId && ub.ISBN == isbn);
     }
 
-    public async Task<PagedList<BookDto>> GetUserBooksAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<UserBook>> GetUserBooksAsync(Guid userId, ElementParams elementParams)
     {
         var books = _context.UserBooks
             .Where(ub => ub.UserId == userId)
-            .Join(_context.Books, ub => ub.ISBN, b => b.ISBN, (ub, b) => new BookDto
-            {
-                ISBN = b.ISBN,
-                Title = b.Title,
-                Author = b.Author,
-                CoverImageUrl = b.CoverImageUrl,
-                Description = b.Description,
-                PublishedYear = b.PublishedYear,
-                PageCount = b.PageCount,
-                IsAvailable = ub.IsAvailable,
-                Notes = ub.Notes,
-                AddedAt = ub.AddedAt
-            });
+            .Include(ub => ub.Book);
             
-        return await PagedList<BookDto>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
     }
 
-    public async Task<PagedList<BookDto>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams)
+    public async Task<PagedList<UserBook>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams)
     {
         var friendIds = await _context.Friendships
             .Where(f =>
@@ -84,20 +72,8 @@ public class BookRepository : IBookRepository
 
         var books = _context.UserBooks
             .Where(ub => friendIds.Contains(ub.UserId) && ub.Book.Title.ToLower().Contains(query.ToLower()))
-            .Join(_context.Books, ub => ub.ISBN, b => b.ISBN, (ub, b) => new BookDto
-            {
-                ISBN = b.ISBN,
-                Title = b.Title,
-                Author = b.Author,
-                CoverImageUrl = b.CoverImageUrl,
-                Description = b.Description,
-                PublishedYear = b.PublishedYear,
-                PageCount = b.PageCount,
-                IsAvailable = ub.IsAvailable,
-                Notes = ub.Notes,
-                AddedAt = ub.AddedAt
-            });
-
-        return await PagedList<BookDto>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
+            .Include(ub => ub.Book);
+            
+        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
     }
 }
