@@ -154,7 +154,7 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("pending-requests")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests([FromQuery]ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests([FromQuery] ElementParams elementParams)
     {
         var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsForOwnerAsync(User.GetUserId(), elementParams);
 
