@@ -6,11 +6,11 @@ namespace API.Interfaces;
 
 public interface IUserRepository
 {
-    Task<AppUser?> GetUserByIdAsync(Guid id);
-    Task<AppUser?> GetUserByEmailAsync(string email);
-    Task<AppUser?> GetUserByUsernameAsync(string username);
+    Task<AppUser?> GetUserByIdAsync(Guid id, CancellationToken ct);
+    Task<AppUser?> GetUserByEmailAsync(string email, CancellationToken ct);
+    Task<AppUser?> GetUserByUsernameAsync(string username, CancellationToken ct);
     
-    Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams);
+    Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams, CancellationToken ct);
     
     //Task<UserProfileDto?> GetUserProfileAsync(Guid userId, Guid currentUserId);
     

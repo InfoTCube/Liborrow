@@ -26,19 +26,19 @@ public class BooksController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<ActionResult<BookWithOwnerDto>> AddBookToCollection(AddBookDto addBookDto)
+    public async Task<ActionResult<BookWithOwnerDto>> AddBookToCollection(AddBookDto addBookDto, CancellationToken ct)
     {
         var userId = User.GetUserId();
-        var existingBook = await _unitOfWork.Books.GetBookByIsbnAsync(addBookDto.ISBN);
+        var existingBook = await _unitOfWork.Books.GetBookByIsbnAsync(addBookDto.ISBN, ct);
 
         if (existingBook is not null) 
         {
-            if (await _unitOfWork.Books.UserOwnsBookAsync(userId, addBookDto.ISBN))
+            if (await _unitOfWork.Books.UserOwnsBookAsync(userId, addBookDto.ISBN, ct))
                 return BadRequest("You already own this book.");
 
-            var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookDto.ISBN, addBookDto.Notes);
+            var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookDto.ISBN, addBookDto.Notes, ct);
             
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(ct))
             {
                 var result = new BookWithOwnerDto
                 {
@@ -62,18 +62,18 @@ public class BooksController : BaseApiController
         // If book doesn't exist in db, try to fetch from Biblioteka Narodowa API
         try
         {
-            var bookFromApi = await _bibliotekaNarodowaBooksService.GetBookByIsbnAsync(addBookDto.ISBN);
+            var bookFromApi = await _bibliotekaNarodowaBooksService.GetBookByIsbnAsync(addBookDto.ISBN, ct);
 
             if (bookFromApi is null)
                 return NotFound("Book not found in external API, please provide the book details manually.");
 
             var newBook = bookFromApi.ToBook(BookSource.BibliotekaNarodowa);
 
-            await _unitOfWork.Books.AddBookAsync(newBook);
+            await _unitOfWork.Books.AddBookAsync(newBook, ct);
 
-            var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookDto.ISBN, addBookDto.Notes);
+            var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookDto.ISBN, addBookDto.Notes, ct);
 
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(ct))
             {
                 var result = new BookWithOwnerDto
                 {
@@ -101,25 +101,25 @@ public class BooksController : BaseApiController
     }
 
     [HttpPost("manual")]
-    public async Task<ActionResult<BookWithOwnerDto>> AddBookManually(AddBookManualDto addBookManualDto)
+    public async Task<ActionResult<BookWithOwnerDto>> AddBookManually(AddBookManualDto addBookManualDto, CancellationToken ct)
     {
         var userId = User.GetUserId();
 
-        if (await _unitOfWork.Books.UserOwnsBookAsync(userId, addBookManualDto.ISBN))
+        if (await _unitOfWork.Books.UserOwnsBookAsync(userId, addBookManualDto.ISBN, ct))
             return BadRequest("You already own this book.");
 
-        var existingBook = await _unitOfWork.Books.GetBookByIsbnAsync(addBookManualDto.ISBN);
+        var existingBook = await _unitOfWork.Books.GetBookByIsbnAsync(addBookManualDto.ISBN, ct);
 
         if (existingBook is null)
         {
             var newBook = addBookManualDto.ToBook(BookSource.Users);
 
-            await _unitOfWork.Books.AddBookAsync(newBook);
+            await _unitOfWork.Books.AddBookAsync(newBook, ct);
         }
 
-        var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookManualDto.ISBN, addBookManualDto.Notes);
+        var userBook = await _unitOfWork.Books.AddUserBookAsync(userId, addBookManualDto.ISBN, addBookManualDto.Notes, ct);
 
-        if (await _unitOfWork.CompleteAsync())
+        if (await _unitOfWork.CompleteAsync(ct))
         {
             var result = new BookWithOwnerDto
             {
@@ -143,11 +143,11 @@ public class BooksController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetMyBooks([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetMyBooks([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var userBooks = await _unitOfWork.Books.GetUserBooksAsync(userId, elementParams);
+        var userBooks = await _unitOfWork.Books.GetUserBooksAsync(userId, elementParams, ct);
 
         Response.AddPaginationHeader(userBooks.CurrentPage, userBooks.PageSize, 
             userBooks.TotalCount, userBooks.TotalPages);
@@ -156,16 +156,17 @@ public class BooksController : BaseApiController
     }
 
     [HttpGet("friends/{friendId}")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetFriendBooks(Guid friendId, [FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetFriendBooks(Guid friendId, [FromQuery] ElementParams elementParams, 
+        CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
+        var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId, ct);
         
         if (!isFriend)
             return BadRequest("You can only view books of your friends.");
         
-        var friendBooks = await _unitOfWork.Books.GetUserBooksAsync(friendId, elementParams);
+        var friendBooks = await _unitOfWork.Books.GetUserBooksAsync(friendId, elementParams, ct);
 
         Response.AddPaginationHeader(friendBooks.CurrentPage, friendBooks.PageSize, 
             friendBooks.TotalCount, friendBooks.TotalPages);
@@ -174,11 +175,12 @@ public class BooksController : BaseApiController
     }
 
     [HttpGet("search-friends")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string query, [FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string query, [FromQuery] ElementParams elementParams,
+         CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var books = await _unitOfWork.Books.SearchFriendsBooksAsync(userId, query, elementParams);
+        var books = await _unitOfWork.Books.SearchFriendsBooksAsync(userId, query, elementParams, ct);
         
         Response.AddPaginationHeader(books.CurrentPage, books.PageSize, 
             books.TotalCount, books.TotalPages);

@@ -15,29 +15,30 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<AppUser?> GetUserByEmailAsync(string email)
+    public async Task<AppUser?> GetUserByEmailAsync(string email, CancellationToken ct)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email.ToLower());
+            .FirstOrDefaultAsync(u => u.Email == email.ToLower(), ct);
     }
 
-    public async Task<AppUser?> GetUserByIdAsync(Guid id)
+    public async Task<AppUser?> GetUserByIdAsync(Guid id, CancellationToken ct)
     {
         return await _context.Users
             .Include(u => u.Books)
                 .ThenInclude(ub => ub.Book)
             .Include(u => u.SentFriendRequests)
             .Include(u => u.ReceivedFriendRequests)
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
     }
 
-    public async Task<AppUser?> GetUserByUsernameAsync(string username)
+    public async Task<AppUser?> GetUserByUsernameAsync(string username, CancellationToken ct)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.UserName == username.ToLower());
+            .FirstOrDefaultAsync(u => u.UserName == username.ToLower(), ct);
     }
 
-    public async Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams)
+    public async Task<PagedList<UserSearchDto>> SearchUsersAsync(Guid currentUserId, string query, ElementParams elementParams, 
+        CancellationToken ct)
     {
         var users = _context.Users
             .Where(u => u.Id != currentUserId &&
@@ -57,6 +58,6 @@ public class UserRepository : IUserRepository
                 CreatedAt = u.CreatedAt
             });
 
-        return await PagedList<UserSearchDto>.CreateAsync(users, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<UserSearchDto>.CreateAsync(users, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 }

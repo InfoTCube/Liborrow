@@ -21,14 +21,14 @@ public class LoansController : BaseApiController
     }
 
     [HttpPost]
-    public async Task<IActionResult> RequestLoan(BorrowRequestDto borrowRequestDto)
+    public async Task<IActionResult> RequestLoan(BorrowRequestDto borrowRequestDto, CancellationToken ct)
     {
-        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(borrowRequestDto.ISBN, borrowRequestDto.OwnerId);
+        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(borrowRequestDto.ISBN, borrowRequestDto.OwnerId, ct);
 
-        if(await _unitOfWork.Loans.IsBookAvailableForLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN) is false)
+        if(await _unitOfWork.Loans.IsBookAvailableForLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN, ct) is false)
             return BadRequest("This book is currently not available for loan.");
 
-        if(await _unitOfWork.Loans.HasPendingLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN, User.GetUserId()))
+        if(await _unitOfWork.Loans.HasPendingLoanAsync(borrowRequestDto.OwnerId, borrowRequestDto.ISBN, User.GetUserId(), ct))
             return BadRequest("You already have a pending loan request for this book.");
 
         var newLoan = new Loan
@@ -42,17 +42,17 @@ public class LoansController : BaseApiController
             UserBookId = userBook.Id
         };
 
-        await _unitOfWork.Loans.AddLoanAsync(newLoan);
+        await _unitOfWork.Loans.AddLoanAsync(newLoan, ct);
 
-        if(await _unitOfWork.CompleteAsync()) return Ok();
+        if(await _unitOfWork.CompleteAsync(ct)) return Ok();
 
         return BadRequest("Failed to request loan");
     }
 
     [HttpPost("respond/{loanId}")]
-    public async Task<ActionResult> RespondToLoan(Guid loanId, ResponseLoanDto respondToLoanDto)
+    public async Task<ActionResult> RespondToLoan(Guid loanId, ResponseLoanDto respondToLoanDto, CancellationToken ct)
     {
-        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId);
+        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId, ct);
 
         if (loan == null) return NotFound("Loan request not found");
         if (loan.OwnerId != User.GetUserId()) return Unauthorized("You are not authorized to respond to this loan request");
@@ -66,15 +66,15 @@ public class LoansController : BaseApiController
             loan.Notes = respondToLoanDto.Notes;
         }
 
-        if(await _unitOfWork.CompleteAsync()) return Ok();
+        if(await _unitOfWork.CompleteAsync(ct)) return Ok();
 
         return BadRequest("Failed to respond to loan request");
     }
 
     [HttpPost("loan/{loanId}")]
-    public async Task<ActionResult> LoanBook(Guid loanId)
+    public async Task<ActionResult> LoanBook(Guid loanId, CancellationToken ct)
     {
-        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId);
+        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId, ct);
 
         if (loan == null) return NotFound("Loan request not found");
         if (loan.OwnerId != User.GetUserId() && loan.BorrowerId != User.GetUserId()) return Unauthorized("You are not authorized to respond to this loan request");
@@ -82,18 +82,18 @@ public class LoansController : BaseApiController
         loan.Status = LoanStatus.Active;
         loan.LoanDate = DateTime.UtcNow;
 
-        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(loan.ISBN, loan.OwnerId);
+        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(loan.ISBN, loan.OwnerId, ct);
         if (userBook != null) userBook.IsAvailable = false;
 
-        if(await _unitOfWork.CompleteAsync()) return Ok();
+        if(await _unitOfWork.CompleteAsync(ct)) return Ok();
 
         return BadRequest("Failed to loan book");
     }
 
     [HttpPost("return/{loanId}")]
-    public async Task<ActionResult> ReturnLoan(Guid loanId)
+    public async Task<ActionResult> ReturnLoan(Guid loanId, CancellationToken ct)
     {
-        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId);
+        var loan = await _unitOfWork.Loans.GetLoanByIdAsync(loanId, ct);
 
         if (loan == null) return NotFound("Loan not found");
         if (loan.BorrowerId != User.GetUserId()) return Unauthorized("You are not authorized to return this loan");
@@ -104,15 +104,15 @@ public class LoansController : BaseApiController
         loan.Status = LoanStatus.Returned;
         loan.ReturnedAt = DateTime.UtcNow;
 
-        if(await _unitOfWork.CompleteAsync()) return Ok();
+        if(await _unitOfWork.CompleteAsync(ct)) return Ok();
 
         return BadRequest("Failed to return loan");
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoans([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoans([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var loans = await _unitOfWork.Loans.GetActiveLoansAsync(User.GetUserId(), elementParams);
+        var loans = await _unitOfWork.Loans.GetActiveLoansAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(loans.CurrentPage, loans.PageSize, 
             loans.TotalCount, loans.TotalPages);
@@ -121,9 +121,9 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("borrowed")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetBorrowedLoans([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetBorrowedLoans([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var borrowedLoans = await _unitOfWork.Loans.GetLoansForBorrowerAsync(User.GetUserId(), elementParams);
+        var borrowedLoans = await _unitOfWork.Loans.GetLoansForBorrowerAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(borrowedLoans.CurrentPage, borrowedLoans.PageSize, 
             borrowedLoans.TotalCount, borrowedLoans.TotalPages);
@@ -132,9 +132,9 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("lent")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLentLoans([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLentLoans([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var lentLoans = await _unitOfWork.Loans.GetLoansForOwnerAsync(User.GetUserId(), elementParams);
+        var lentLoans = await _unitOfWork.Loans.GetLoansForOwnerAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(lentLoans.CurrentPage, lentLoans.PageSize, 
             lentLoans.TotalCount, lentLoans.TotalPages);
@@ -143,9 +143,9 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("history")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoanHistory([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoanHistory([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var loanHistory = await _unitOfWork.Loans.GetLoanHistoryAsync(User.GetUserId(), elementParams);
+        var loanHistory = await _unitOfWork.Loans.GetLoanHistoryAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(loanHistory.CurrentPage, loanHistory.PageSize, 
             loanHistory.TotalCount, loanHistory.TotalPages);
@@ -154,9 +154,9 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("pending-requests")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequests([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsForOwnerAsync(User.GetUserId(), elementParams);
+        var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsForOwnerAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(pendingRequests.CurrentPage, pendingRequests.PageSize, 
             pendingRequests.TotalCount, pendingRequests.TotalPages);
@@ -165,9 +165,9 @@ public class LoansController : BaseApiController
     }
 
     [HttpGet("pending-requests/borrower")]
-    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequestsFromBorrower([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetPendingRequestsFromBorrower([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
-        var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsFromBorrowerAsync(User.GetUserId(), elementParams);
+        var pendingRequests = await _unitOfWork.Loans.GetPendingRequestsFromBorrowerAsync(User.GetUserId(), elementParams, ct);
 
         Response.AddPaginationHeader(pendingRequests.CurrentPage, pendingRequests.PageSize, 
             pendingRequests.TotalCount, pendingRequests.TotalPages);

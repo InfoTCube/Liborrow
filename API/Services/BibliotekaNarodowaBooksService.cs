@@ -16,11 +16,11 @@ public class BibliotekaNarodowaBooksService : IBibliotekaNarodowaBooksService
         _httpClient.BaseAddress = new Uri("https://data.bn.org.pl/api/institutions/");
     }
 
-    public async Task<BookDto?> GetBookByIsbnAsync(string isbn)
+    public async Task<BookDto?> GetBookByIsbnAsync(string isbn, CancellationToken ct)
     {
         try
         {
-            var response = await _httpClient.GetAsync($"bibs.json?isbnIssn={isbn}");
+            var response = await _httpClient.GetAsync($"bibs.json?isbnIssn={isbn}", ct);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -29,7 +29,7 @@ public class BibliotekaNarodowaBooksService : IBibliotekaNarodowaBooksService
                 return null;
             }
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync(ct);
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
 
