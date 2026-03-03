@@ -67,73 +67,124 @@ public class BibliotekaNarodowaBooksService : IBibliotekaNarodowaBooksService
             return book;
 
         foreach (var field in fields.EnumerateArray())
-        {
-            if (field.TryGetProperty("245", out var titleField))
-            {
-                var title = ExtractSubfieldValue(titleField, "a");
-                var subtitle = ExtractSubfieldValue(titleField, "b");
-                
-                book.Title = title;
-                if (!string.IsNullOrEmpty(subtitle))
-                {
-                    book.Title += " - " + subtitle;
-                }
-            }
-            else if (field.TryGetProperty("100", out var authorField))
-            {
-                var author = ExtractSubfieldValue(authorField, "a");
-                if (!string.IsNullOrEmpty(author))
-                {
-                    book.Author = ConvertAuthor(author);
-                }
-            }
-            else if (field.TryGetProperty("700", out var additionalAuthorField))
-            {
-                var additionalAuthor = ExtractSubfieldValue(additionalAuthorField, "a");
-                if (!string.IsNullOrEmpty(additionalAuthor))
-                {
-                    if (!IsAuthor(additionalAuthorField))
-                        continue;
-
-                    book.Author +=  ConvertAuthor(additionalAuthor) + ", ";
-                }
-            }
-            else if (field.TryGetProperty("260", out var publishField))
-            {
-                book.PublishedYear = ExtractSubfieldValue(publishField, "c");
-                book.PublishedYear = book.PublishedYear?.TrimEnd('.', ' ');
-            }
-            else if (field.TryGetProperty("300", out var pagesField))
-            {
-                var pagesInfo = ExtractSubfieldValue(pagesField, "a");
-                if (!string.IsNullOrEmpty(pagesInfo))
-                {
-                    var match = System.Text.RegularExpressions.Regex.Match(pagesInfo, @"(\d+)");
-                    if (match.Success && int.TryParse(match.Groups[1].Value, out int pageCount))
-                    {
-                        book.PageCount = pageCount;
-                    }
-                }
-            }
-            else if (field.TryGetProperty("650", out var subjectField) && string.IsNullOrEmpty(book.Description))
-            {
-                var subject = ExtractSubfieldValue(subjectField, "a");
-                if (!string.IsNullOrEmpty(subject))
-                {
-                    book.Description = subject;
-                }
-            }
-        }
+            ProcessField(field, book);
 
         book.CoverImageUrl = null;
 
         if(string.IsNullOrEmpty(book.Author))
-        {
             book.Author = "Unknown Author";
-        }
+
         book.Author = book.Author.TrimEnd(',', ' ');
 
         return book;
+    }
+
+    private void ProcessField(JsonElement field, BookDto book)
+    {
+        if (TryProcessTitleField(field, out var title)) 
+        {
+            book.Title = title;
+        }
+        else if (TryProcessAuthorField(field, out var author)) 
+        {
+            AppendAuthor(book, author);
+        }
+        else if (TryProcessPublishField(field, out var year)) 
+        {
+            book.PublishedYear = year;
+        }
+        else if (TryProcessPagesField(field, out var pageCount)) 
+        {
+            book.PageCount = pageCount;
+        }
+        else if (TryProcessDescriptionField(field, out var description) 
+            && string.IsNullOrEmpty(book.Description)) 
+        {
+            book.Description = description;
+        }
+    }
+
+    private bool TryProcessTitleField(JsonElement field, out string title)
+    {
+        title = null;
+        if (!field.TryGetProperty("245", out var titleField))
+            return false;
+
+        var mainTitle = ExtractSubfieldValue(titleField, "a");
+        var subtitle = ExtractSubfieldValue(titleField, "b");
+        
+        title = string.IsNullOrEmpty(subtitle) 
+            ? mainTitle 
+            : $"{mainTitle} - {subtitle}";
+        
+        return true;
+    }
+
+    private bool TryProcessAuthorField(JsonElement field, out string author)
+    {
+        author = null;
+        
+        if (field.TryGetProperty("100", out var authorField))
+        {
+            author = ExtractSubfieldValue(authorField, "a");
+            return !string.IsNullOrEmpty(author);
+        }
+        
+        if (field.TryGetProperty("700", out var additionalAuthorField) 
+            && IsAuthor(additionalAuthorField))
+        {
+            author = ExtractSubfieldValue(additionalAuthorField, "a");
+            return !string.IsNullOrEmpty(author);
+        }
+        
+        return false;
+    }
+
+    private bool TryProcessPublishField(JsonElement field, out string year)
+    {
+        year = null;
+        if (!field.TryGetProperty("260", out var publishField))
+            return false;
+
+        year = ExtractSubfieldValue(publishField, "c")?.TrimEnd('.', ' ');
+        return year != null;
+    }
+
+    private bool TryProcessPagesField(JsonElement field, out int pageCount)
+    {
+        pageCount = 0;
+        if (!field.TryGetProperty("300", out var pagesField))
+            return false;
+
+        var pagesInfo = ExtractSubfieldValue(pagesField, "a");
+        if (string.IsNullOrEmpty(pagesInfo))
+            return false;
+
+        var match = System.Text.RegularExpressions.Regex.Match(pagesInfo, @"(\d+)");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out pageCount))
+            return true;
+
+        return false;
+    }
+
+    private bool TryProcessDescriptionField(JsonElement field, out string description)
+    {
+        description = null;
+        if (!field.TryGetProperty("650", out var subjectField))
+            return false;
+
+        description = ExtractSubfieldValue(subjectField, "a");
+        return !string.IsNullOrEmpty(description);
+    }
+
+    private void AppendAuthor(BookDto book, string author)
+    {
+        var convertedAuthor = ConvertAuthor(author);
+        
+        if (string.IsNullOrEmpty(book.Author))
+            book.Author = convertedAuthor;
+        else
+            book.Author += $", {convertedAuthor}";
     }
 
     private string? ExtractSubfieldValue(JsonElement field, string subfieldCode)
@@ -177,21 +228,29 @@ public class BibliotekaNarodowaBooksService : IBibliotekaNarodowaBooksService
 
         foreach (var subfield in subfields.EnumerateArray())
         {
-            if (subfield.TryGetProperty("e", out var role))
+            if (TryGetAuthorRole(subfield, out var role) && IsAuthorRole(role))
             {
-                var roleValue = role.GetString()?.ToLowerInvariant();
-                
-                if (!string.IsNullOrEmpty(roleValue))
-                {
-                    if (roleValue.Contains("autor") || 
-                        roleValue.Contains("author"))
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
         }
         
         return false;
+    }
+
+    private bool TryGetAuthorRole(JsonElement subfield, out string role)
+    {
+        role = null;
+        if (subfield.TryGetProperty("e", out var roleElement))
+        {
+            role = roleElement.GetString()?.ToLowerInvariant();
+            return !string.IsNullOrEmpty(role);
+        }
+        return false;
+    }
+
+    private bool IsAuthorRole(string role)
+    {
+        var authorIndicators = new[] { "autor", "author" };
+        return authorIndicators.Any(indicator => role.Contains(indicator));
     }
 }
