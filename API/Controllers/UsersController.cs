@@ -18,11 +18,12 @@ public class UsersController : BaseApiController
 
     [Authorize]
     [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string query, [FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<UserSearchDto>>> SearchUsers([FromQuery] string query, [FromQuery] ElementParams elementParams, 
+        CancellationToken ct)
     {
         var currentUserId = User.GetUserId();
         
-        var users = await _unitOfWork.Users.SearchUsersAsync(currentUserId, query, elementParams);
+        var users = await _unitOfWork.Users.SearchUsersAsync(currentUserId, query, elementParams, ct);
 
         Response.AddPaginationHeader(users.CurrentPage, users.PageSize, 
             users.TotalCount, users.TotalPages);

@@ -7,5 +7,5 @@ public interface IUnitOfWork
     IFriendshipRepository Friendships { get; }
     ILoanRepository Loans { get; }
     
-    Task<bool> CompleteAsync();
+    Task<bool> CompleteAsync(CancellationToken ct);
 }

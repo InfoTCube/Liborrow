@@ -16,12 +16,12 @@ public class LoanRepository : ILoanRepository
         _context = context;
     }
 
-    public async Task AddLoanAsync(Loan loan)
+    public async Task AddLoanAsync(Loan loan, CancellationToken ct)
     {
-        await _context.Loans.AddAsync(loan);
+        await _context.Loans.AddAsync(loan, ct);
     }
 
-    public async Task<PagedList<Loan>> GetActiveLoansAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetActiveLoansAsync(Guid userId, ElementParams elementParams, CancellationToken ct)
     {
         var loans = _context.Loans
             .Where(l => l.BorrowerId == userId && (l.Status == LoanStatus.Active || l.Status == LoanStatus.Overdue))
@@ -29,15 +29,15 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<Loan?> GetLoanByIdAsync(Guid id)
+    public async Task<Loan?> GetLoanByIdAsync(Guid id, CancellationToken ct)
     {
-        return await _context.Loans.FindAsync(id);
+        return await _context.Loans.FindAsync(id, ct);
     }
 
-    public async Task<PagedList<Loan>> GetLoanHistoryAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetLoanHistoryAsync(Guid userId, ElementParams elementParams, CancellationToken ct)
     {
         var loans = _context.Loans
             .Where(l => (l.BorrowerId == userId || l.OwnerId == userId) && 
@@ -46,10 +46,11 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<PagedList<Loan>> GetLoansForBorrowerAsync(Guid borrowerId, ElementParams elementParams, LoanStatus? status = null)
+    public async Task<PagedList<Loan>> GetLoansForBorrowerAsync(Guid borrowerId, ElementParams elementParams, 
+        CancellationToken ct, LoanStatus? status = null)
     {
         var query = _context.Loans
             .Where(l => l.BorrowerId == borrowerId);
@@ -62,10 +63,11 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<PagedList<Loan>> GetLoansForOwnerAsync(Guid ownerId, ElementParams elementParams, LoanStatus? status = null)
+    public async Task<PagedList<Loan>> GetLoansForOwnerAsync(Guid ownerId, ElementParams elementParams, 
+        CancellationToken ct, LoanStatus? status = null)
     {
         var query = _context.Loans
             .Where(l => l.OwnerId == ownerId);
@@ -78,10 +80,11 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<PagedList<Loan>> GetPendingRequestsForOwnerAsync(Guid ownerId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetPendingRequestsForOwnerAsync(Guid ownerId, ElementParams elementParams, 
+        CancellationToken ct)
     {
         var loans = _context.Loans
             .Where(l => l.OwnerId == ownerId && l.Status == LoanStatus.Pending)
@@ -89,10 +92,11 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<PagedList<Loan>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId, ElementParams elementParams)
+    public async Task<PagedList<Loan>> GetPendingRequestsFromBorrowerAsync(Guid borrowerId, ElementParams elementParams, 
+        CancellationToken ct)
     {
         var loans = _context.Loans
             .Where(l => l.BorrowerId == borrowerId && l.Status == LoanStatus.Pending)
@@ -100,21 +104,21 @@ public class LoanRepository : ILoanRepository
             .Include(l => l.Owner)
             .Include(l => l.Borrower);
 
-        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<Loan>.CreateAsync(loans, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<bool> HasPendingLoanAsync(Guid ownerId, string isbn, Guid borrowerId)
+    public async Task<bool> HasPendingLoanAsync(Guid ownerId, string isbn, Guid borrowerId, CancellationToken ct)
     {
         return await _context.UserBooks
             .Where(ub => ub.UserId == ownerId && ub.Book.ISBN == isbn)
             .SelectMany(ub => ub.Loans)
-            .AnyAsync(l => l.BorrowerId == borrowerId && l.Status == LoanStatus.Pending);
+            .AnyAsync(l => l.BorrowerId == borrowerId && l.Status == LoanStatus.Pending, ct);
     }
 
-    public async Task<bool> IsBookAvailableForLoanAsync(Guid ownerId, string isbn)
+    public async Task<bool> IsBookAvailableForLoanAsync(Guid ownerId, string isbn, CancellationToken ct)
     {
         return await _context.UserBooks
             .Where(ub => ub.UserId == ownerId && ub.Book.ISBN == isbn)
-            .AnyAsync(b => b.IsAvailable);
+            .AnyAsync(b => b.IsAvailable, ct);
     }
 }

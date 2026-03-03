@@ -20,93 +20,93 @@ public class FriendsController : BaseApiController
     }
 
     [HttpPost("request/{friendId}")]
-    public async Task<ActionResult> SendFriendRequest(Guid friendId)
+    public async Task<ActionResult> SendFriendRequest(Guid friendId, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
         if (userId == friendId)
             return BadRequest("Cannot send friend request to yourself");
         
-        var result = await _unitOfWork.Friendships.SendFriendRequestAsync(userId, friendId);
+        var result = await _unitOfWork.Friendships.SendFriendRequestAsync(userId, friendId, ct);
         
         if (!result)
             return BadRequest("Friend request already exists or user is already a friend");
         
-        await _unitOfWork.CompleteAsync();
+        await _unitOfWork.CompleteAsync(ct);
         
         return Ok();
     }
     
     [HttpDelete("request/{friendshipId}/cancel")]
-    public async Task<ActionResult> CancelFriendRequest(Guid friendshipId)
+    public async Task<ActionResult> CancelFriendRequest(Guid friendshipId, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var success = await _unitOfWork.Friendships.CancelFriendRequestAsync(userId, friendshipId);
+        var success = await _unitOfWork.Friendships.CancelFriendRequestAsync(userId, friendshipId, ct);
         
         if (!success)
             return NotFound("Friend request not found or you don't have permission to cancel it");
         
-        if (await _unitOfWork.CompleteAsync())
+        if (await _unitOfWork.CompleteAsync(ct))
             return NoContent();
         
         return BadRequest("Failed to cancel friend request");
     }
 
     [HttpPut("accept/{friendshipId}")]
-    public async Task<ActionResult> AcceptFriendRequest(Guid friendshipId)
+    public async Task<ActionResult> AcceptFriendRequest(Guid friendshipId, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var friendship = await _unitOfWork.Friendships.GetFriendshipByIdAsync(friendshipId);
+        var friendship = await _unitOfWork.Friendships.GetFriendshipByIdAsync(friendshipId, ct);
         
         if (friendship == null || friendship.ReceiverId != userId)
             return NotFound();
         
         friendship.Status = FriendshipStatus.Accepted;
-        await _unitOfWork.CompleteAsync();
+        await _unitOfWork.CompleteAsync(ct);
         
         return Ok();
     }
 
     [HttpPut("decline/{friendshipId}")]
-    public async Task<ActionResult> DeclineFriendRequest(Guid friendshipId)
+    public async Task<ActionResult> DeclineFriendRequest(Guid friendshipId, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var friendship = await _unitOfWork.Friendships.GetFriendshipByIdAsync(friendshipId);
+        var friendship = await _unitOfWork.Friendships.GetFriendshipByIdAsync(friendshipId, ct);
         
         if (friendship == null || friendship.ReceiverId != userId)
             return NotFound();
         
         friendship.Status = FriendshipStatus.Declined;
-        await _unitOfWork.CompleteAsync();
+        await _unitOfWork.CompleteAsync(ct);
         
         return Ok();
     }
 
     [HttpDelete("{friendId}")]
-    public async Task<ActionResult> RemoveFriend(Guid friendId)
+    public async Task<ActionResult> RemoveFriend(Guid friendId, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var success = await _unitOfWork.Friendships.RemoveFriendAsync(userId, friendId);
+        var success = await _unitOfWork.Friendships.RemoveFriendAsync(userId, friendId, ct);
         
         if (!success)
             return NotFound("Friendship not found");
         
-        if (await _unitOfWork.CompleteAsync())
+        if (await _unitOfWork.CompleteAsync(ct))
             return NoContent();
         
         return BadRequest("Failed to remove friend");
     }
     
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FriendDto>>> GetFriends([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<FriendDto>>> GetFriends([FromQuery] ElementParams elementParams, CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var friends = await _unitOfWork.Friendships.GetUserFriendsAsync(userId, elementParams);
+        var friends = await _unitOfWork.Friendships.GetUserFriendsAsync(userId, elementParams, ct);
         
         Response.AddPaginationHeader(friends.CurrentPage, friends.PageSize, 
             friends.TotalCount, friends.TotalPages);
@@ -115,11 +115,12 @@ public class FriendsController : BaseApiController
     }
     
     [HttpGet("requests")]
-    public async Task<ActionResult<IEnumerable<FriendRequestDto>>> GetPendingRequests([FromQuery] ElementParams elementParams)
+    public async Task<ActionResult<IEnumerable<FriendRequestDto>>> GetPendingRequests([FromQuery] ElementParams elementParams, 
+        CancellationToken ct)
     {
         var userId = User.GetUserId();
         
-        var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId, elementParams);
+        var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId, elementParams, ct);
         
         Response.AddPaginationHeader(requests.CurrentPage, requests.PageSize, 
             requests.TotalCount, requests.TotalPages);

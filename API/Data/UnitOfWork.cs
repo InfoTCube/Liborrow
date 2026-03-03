@@ -16,5 +16,5 @@ public class UnitOfWork : IUnitOfWork
     public IFriendshipRepository Friendships => new FriendshipRepository(_context);
     public ILoanRepository Loans => new LoanRepository(_context);
 
-    public async Task<bool> CompleteAsync() => await _context.SaveChangesAsync() > 0;
+    public async Task<bool> CompleteAsync(CancellationToken ct) => await _context.SaveChangesAsync(ct) > 0;
 }

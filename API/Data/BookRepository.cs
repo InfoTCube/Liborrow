@@ -15,23 +15,23 @@ public class BookRepository : IBookRepository
         _context = context;
     }
 
-    public async Task<Book?> GetBookByIsbnAsync(string isbn)
+    public async Task<Book?> GetBookByIsbnAsync(string isbn, CancellationToken ct)
     {
-        return await _context.Books.FindAsync(isbn);
+        return await _context.Books.FindAsync(isbn, ct);
     }
 
-    public async Task<UserBook?> GetUserBookByIdAndUserIdAsync(string isbn, Guid userId)
+    public async Task<UserBook?> GetUserBookByIdAndUserIdAsync(string isbn, Guid userId, CancellationToken ct)
     {
         return await _context.UserBooks
-            .FirstOrDefaultAsync(ub => ub.ISBN == isbn && ub.UserId == userId);
+            .FirstOrDefaultAsync(ub => ub.ISBN == isbn && ub.UserId == userId, ct);
     }
 
-    public async Task AddBookAsync(Book book)
+    public async Task AddBookAsync(Book book, CancellationToken ct)
     {
-        await _context.Books.AddAsync(book);
+        await _context.Books.AddAsync(book, ct);
     }
 
-    public async Task<UserBook> AddUserBookAsync(Guid userId, string isbn, string? notes)
+    public async Task<UserBook> AddUserBookAsync(Guid userId, string isbn, string? notes, CancellationToken ct)
     {
         var userBook = new UserBook
         {
@@ -43,37 +43,38 @@ public class BookRepository : IBookRepository
             Notes = notes
         };
         
-        await _context.UserBooks.AddAsync(userBook);
+        await _context.UserBooks.AddAsync(userBook, ct);
         return userBook;
     }
 
-    public async Task<bool> UserOwnsBookAsync(Guid userId, string isbn)
+    public async Task<bool> UserOwnsBookAsync(Guid userId, string isbn, CancellationToken ct)
     {
         return await _context.UserBooks
-            .AnyAsync(ub => ub.UserId == userId && ub.ISBN == isbn);
+            .AnyAsync(ub => ub.UserId == userId && ub.ISBN == isbn, ct);
     }
 
-    public async Task<PagedList<UserBook>> GetUserBooksAsync(Guid userId, ElementParams elementParams)
+    public async Task<PagedList<UserBook>> GetUserBooksAsync(Guid userId, ElementParams elementParams, CancellationToken ct)
     {
         var books = _context.UserBooks
             .Where(ub => ub.UserId == userId)
             .Include(ub => ub.Book);
             
-        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 
-    public async Task<PagedList<UserBook>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams)
+    public async Task<PagedList<UserBook>> SearchFriendsBooksAsync(Guid userId, string query, ElementParams elementParams, 
+        CancellationToken ct)
     {
         var friendIds = await _context.Friendships
             .Where(f =>
                 f.RequesterId == userId || f.ReceiverId == userId)
             .Select(f => f.RequesterId == userId ? f.ReceiverId : f.RequesterId)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var books = _context.UserBooks
             .Where(ub => friendIds.Contains(ub.UserId) && ub.Book.Title.ToLower().Contains(query.ToLower()))
             .Include(ub => ub.Book);
             
-        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize);
+        return await PagedList<UserBook>.CreateAsync(books, elementParams.PageNumber, elementParams.PageSize, ct);
     }
 }

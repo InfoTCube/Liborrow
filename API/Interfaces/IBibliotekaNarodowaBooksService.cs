@@ -4,5 +4,5 @@ namespace API.Interfaces;
 
 public interface IBibliotekaNarodowaBooksService
 {
-    Task<BookDto?> GetBookByIsbnAsync(string isbn);
+    Task<BookDto?> GetBookByIsbnAsync(string isbn, CancellationToken ct);
 }
