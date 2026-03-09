@@ -123,19 +123,20 @@ public class BooksController : BaseApiController
         {
             var result = new BookWithOwnerDto
             {
-                ISBN = addBookManualDto.ISBN,
-                Title = addBookManualDto.Title,
-                Author = addBookManualDto.Author,
-                CoverImageUrl = addBookManualDto.CoverImageUrl,
-                Description = addBookManualDto.Description,
-                PublishedYear = addBookManualDto.PublishedYear,
-                PageCount = addBookManualDto.PageCount,
+                ISBN = existingBook is null ? addBookManualDto.ISBN : existingBook.ISBN,
+                Title = existingBook is null ? addBookManualDto.Title : existingBook.Title,
+                Author = existingBook is null ? addBookManualDto.Author : existingBook.Author,
+                CoverImageUrl = existingBook is null ? addBookManualDto.CoverImageUrl : existingBook.CoverImageUrl,
+                Description = existingBook is null ? addBookManualDto.Description : existingBook.Description,
+                PublishedYear = existingBook is null ? addBookManualDto.PublishedYear : existingBook.PublishedYear,
+                PageCount = existingBook is null ? addBookManualDto.PageCount : existingBook.PageCount,
                 IsAvailable = userBook.IsAvailable,
                 Notes = userBook.Notes,
                 AddedAt = userBook.AddedAt,
                 OwnerId = userId,
                 OwnerName = User.Identity?.Name ?? "Unknown",
             };
+
             return Ok(result);
         }
 
