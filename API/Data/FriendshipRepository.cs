@@ -1,4 +1,3 @@
-using API.DTOs.Friendships;
 using API.Entities;
 using API.Enums;
 using API.Helpers;

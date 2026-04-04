@@ -104,6 +104,9 @@ public class LoansController : BaseApiController
         loan.Status = LoanStatus.Returned;
         loan.ReturnedAt = DateTime.UtcNow;
 
+        var userBook = await _unitOfWork.Books.GetUserBookByIdAndUserIdAsync(loan.ISBN, loan.OwnerId, ct);
+        if (userBook != null) userBook.IsAvailable = true;
+
         if(await _unitOfWork.CompleteAsync(ct)) return Ok();
 
         return BadRequest("Failed to return loan");
