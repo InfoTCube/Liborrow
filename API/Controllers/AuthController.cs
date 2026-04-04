@@ -1,12 +1,15 @@
 using API.DTOs.Auth;
 using API.Entities;
 using API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
+[EnableRateLimiting("auth")]
 public class AuthController : BaseApiController
 {
     private readonly UserManager<AppUser> _userManager;

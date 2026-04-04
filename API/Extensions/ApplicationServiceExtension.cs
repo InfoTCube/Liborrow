@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using API.Data;
 using API.Interfaces;
 using API.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -37,6 +39,24 @@ public static class ApplicationServiceExtension
             });
         });
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddRateLimiter(options =>
+        {
+            options.AddFixedWindowLimiter("auth", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = 5;
+                limiterOptions.Window = TimeSpan.FromMinutes(1);
+                limiterOptions.QueueLimit = 0;
+                limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            });
+
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = (context, ct) =>
+            {
+                context.HttpContext.Response.Headers.RetryAfter = "60";
+                return ValueTask.CompletedTask;
+            };
+        });
 
         return services;
     }
