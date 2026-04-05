@@ -1,5 +1,6 @@
 using API.Extensions;
 using API.Middlewares;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 

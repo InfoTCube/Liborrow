@@ -5,6 +5,8 @@ using API.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 namespace API.Extensions;
 
@@ -57,6 +59,9 @@ public static class ApplicationServiceExtension
                 return ValueTask.CompletedTask;
             };
         });
+
+        services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+        services.AddFluentValidationAutoValidation();
 
         return services;
     }
