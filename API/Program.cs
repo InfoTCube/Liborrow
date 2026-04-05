@@ -1,6 +1,5 @@
 using API.Extensions;
 using API.Middlewares;
-using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,5 +25,6 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

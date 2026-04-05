@@ -63,6 +63,8 @@ public static class ApplicationServiceExtension
         services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
         services.AddFluentValidationAutoValidation();
 
+        services.AddHealthChecks();
+
         return services;
     }
 
